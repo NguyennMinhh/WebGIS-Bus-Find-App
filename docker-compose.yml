@@ -1,0 +1,108 @@
+services:
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL + PostGIS — CSDL địa lý
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgis/postgis:16-3.4
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - gis-network
+
+  # ---------------------------------------------------------------------------
+  # Django Backend — REST API + GeoDjango
+  # ---------------------------------------------------------------------------
+  backend:
+    build: ./backend
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file: .env
+    environment:
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_HOST: db
+      DB_PORT: ${POSTGRES_PORT}
+      SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DEBUG: ${DJANGO_DEBUG}
+      ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+    volumes:
+      - ./backend:/app
+      - ./data/tay-ho-datas.geojson:/geojson/tay-ho-datas.geojson:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gis-network
+
+  # ---------------------------------------------------------------------------
+  # GeoServer — Map server phục vụ WMS/WFS từ PostGIS
+  # Port nội bộ 8080, expose ra ngoài 8600 (tránh xung đột)
+  # ---------------------------------------------------------------------------
+  geoserver:
+    image: kartoza/geoserver:2.25.2
+    env_file: .env
+    environment:
+      GEOSERVER_ADMIN_USER: ${GEOSERVER_ADMIN_USER}
+      GEOSERVER_ADMIN_PASSWORD: ${GEOSERVER_ADMIN_PASSWORD}
+      GEOSERVER_DATA_DIR: /opt/geoserver/data_dir
+      GEOWEBCACHE_CACHE_DIR: /opt/geoserver/data_dir/gwc
+      # Cho phép CORS để frontend gọi WMS
+      CORS_ENABLED: "true"
+      CORS_ALLOWED_ORIGINS: "http://localhost:5173"
+    volumes:
+      - geoserver_data:/opt/geoserver/data_dir
+    ports:
+      - "8600:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/geoserver/web/ | grep -q '200\\|302'"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+    networks:
+      - gis-network
+
+  # ---------------------------------------------------------------------------
+  # React Frontend — Vite dev server với hot reload
+  # ---------------------------------------------------------------------------
+  frontend:
+    build: ./frontend
+    env_file: .env
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
+      VITE_GEOSERVER_URL: ${VITE_GEOSERVER_URL}
+      VITE_GEOSERVER_WORKSPACE: ${VITE_GEOSERVER_WORKSPACE}
+    volumes:
+      - ./frontend/src:/app/src
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - gis-network
+
+networks:
+  gis-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  geoserver_data:

@@ -1,0 +1,88 @@
+[
+  {
+    "model": "routes.busroute",
+    "pk": 1,
+    "fields": {
+      "osm_id": "12726060",
+      "ref": "09A",
+      "name": "Trần Khánh Dư - Cầu Giấy - Đại học Mỏ",
+      "from_stop": "Bờ Hồ",
+      "to_stop": "Đại học Mỏ",
+      "operator": "Công ty Cổ phần Vận tải & Dịch vụ Liên Ninh",
+      "opening_hours": "Mo-Su 05:00-21:30",
+      "charge": "10000 VND",
+      "interval": "00:15-00:20",
+      "path": "SRID=4326;MULTILINESTRING((105.8607095 21.023641, 105.8607824 21.0234764, 105.8611928 21.0222952, 105.8612583 21.0221353, 105.8616089 21.0204464, 105.8616141 21.0200667, 105.8617657 21.0187569, 105.8612821 21.0184309, 105.8603005 21.0186077, 105.8597317 21.0187694, 105.8046867 21.055715, 105.8046536 21.0613349, 105.8082419 21.0683142, 105.8081013 21.0708387, 105.8009792 21.0735052))"
+    }
+  },
+  {
+    "model": "routes.busstop",
+    "pk": 1,
+    "fields": {
+      "osm_id": "8741294713",
+      "name": "Đối diện Nhà hàng Ngọc Được 3 - Võ Chí Công",
+      "location": "SRID=4326;POINT(105.8046867 21.055715)"
+    }
+  },
+  {
+    "model": "routes.busstop",
+    "pk": 2,
+    "fields": {
+      "osm_id": "8741294714",
+      "name": "41 Võ Chí Công (Cửa hàng Lập 4 mùa)",
+      "location": "SRID=4326;POINT(105.8046536 21.0613349)"
+    }
+  },
+  {
+    "model": "routes.busstop",
+    "pk": 3,
+    "fields": {
+      "osm_id": "8741294715",
+      "name": "Khu liên cơ quan sở ngành - 258 Võ Chí Công",
+      "location": "SRID=4326;POINT(105.8082419 21.0683142)"
+    }
+  },
+  {
+    "model": "routes.busstop",
+    "pk": 4,
+    "fields": {
+      "osm_id": "8852120921",
+      "name": "Cổng vào KĐT Ciputra (Đối diện 83 Nguyễn Hoàng Tôn)",
+      "location": "SRID=4326;POINT(105.8081013 21.0708387)"
+    }
+  },
+  {
+    "model": "routes.busstop",
+    "pk": 5,
+    "fields": {
+      "osm_id": "8852120922",
+      "name": "333-335 Nguyễn Hoàng Tôn",
+      "location": "SRID=4326;POINT(105.8009792 21.0735052)"
+    }
+  },
+  {
+    "model": "routes.routestop",
+    "pk": 1,
+    "fields": { "route": 1, "stop": 1, "sequence": 1 }
+  },
+  {
+    "model": "routes.routestop",
+    "pk": 2,
+    "fields": { "route": 1, "stop": 2, "sequence": 2 }
+  },
+  {
+    "model": "routes.routestop",
+    "pk": 3,
+    "fields": { "route": 1, "stop": 3, "sequence": 3 }
+  },
+  {
+    "model": "routes.routestop",
+    "pk": 4,
+    "fields": { "route": 1, "stop": 4, "sequence": 4 }
+  },
+  {
+    "model": "routes.routestop",
+    "pk": 5,
+    "fields": { "route": 1, "stop": 5, "sequence": 5 }
+  }
+]

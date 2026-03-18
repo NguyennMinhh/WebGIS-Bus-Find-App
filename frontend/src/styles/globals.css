@@ -1,0 +1,13 @@
+/* Tailwind base directives — phải có đủ 3 dòng này */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Override mặc định: map OpenLayers chiếm toàn màn hình */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* OpenLayers CSS — cần import riêng trong MapView.tsx */
