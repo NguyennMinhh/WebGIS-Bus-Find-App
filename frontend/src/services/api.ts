@@ -3,6 +3,8 @@
 // Thêm các hàm gọi API vào đây khi code tính năng
 // =============================================================================
 
+import type { LngLat, FindRouteResult } from '../types'
+
 const BASE_URL = import.meta.env.VITE_API_URL as string
 
 /** Helper: gọi GET và parse JSON */
@@ -12,8 +14,20 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export const api = { get }
+/** Helper: gọi POST và parse JSON */
+async function post<TBody, TResponse>(path: string, body: TBody): Promise<TResponse> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(`API error ${res.status}: ${path}`)
+  return res.json() as Promise<TResponse>
+}
 
-// Ví dụ sẽ thêm sau:
-// export const findRoutes = (params: FindRoutesParams) => ...
-// export const getRouteDetail = (id: number) => ...
+export const api = {
+  get,
+  findRoute(origin: LngLat, destination: LngLat): Promise<FindRouteResult[]> {
+    return post('/api/find-route/', { origin, destination, radius: 500 })
+  },
+}

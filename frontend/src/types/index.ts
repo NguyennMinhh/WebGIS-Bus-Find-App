@@ -33,3 +33,14 @@ export interface BusStop {
   lat: number
   lng: number
 }
+
+/** Kết quả 1 tuyến từ API find-route */
+export interface FindRouteResult {
+  id: number
+  ref: string
+  name: string
+  charge: string
+  interval: string
+  board_stop: { id: number; name: string; lat: number; lng: number }
+  alight_stop: { id: number; name: string; lat: number; lng: number }
+}
