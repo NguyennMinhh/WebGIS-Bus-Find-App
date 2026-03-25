@@ -15,6 +15,8 @@ const MapView = () => {
   const [selectionMode, setSelectionMode] = useState<SelectionMode>(null)
   const [results, setResults] = useState<FindRouteResult[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [radius, setRadius] = useState(500)
 
   // ── Khởi tạo bản đồ, lấy mapRef từ hook ─────────────────────────────────
   const { mapRef } = useMap(containerRef)
@@ -24,6 +26,7 @@ const MapView = () => {
     mapRef,
     selectionMode,
     setSelectionMode,
+    radius,
   })
 
   // ── Handler gọi API tìm tuyến ─────────────────────────────────────────
@@ -32,16 +35,18 @@ const MapView = () => {
 
     setLoading(true)
     setResults([])
+    setError(null)
 
     try {
-      const data = await api.findRoute(origin, destination)
+      const data = await api.findRoute(origin, destination, radius)
       setResults(data)
     } catch (err) {
+      setError('Không thể kết nối server. Vui lòng thử lại.')
       console.error('Tìm tuyến thất bại:', err)
     } finally {
-      setLoading(false) 
+      setLoading(false)
     }
-  }, [origin, destination])
+  }, [origin, destination, radius])
 
   // ── Handler GPS ────────────────────────────────────────────────────────
   const handleGPS = useCallback(async () => {
@@ -71,7 +76,10 @@ const MapView = () => {
         selectionMode={selectionMode}
         results={results}
         loading={loading}
+        error={error}
+        radius={radius}
         onSetSelectionMode={setSelectionMode}
+        onSetRadius={setRadius}
         onSearch={handleSearch}
         onGPS={handleGPS}
         onClear={clearAll}

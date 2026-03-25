@@ -1,5 +1,6 @@
 from django.urls import path
-from . import views
+from .views import FindRouteView
 
-# Thêm URL patterns vào đây khi bắt đầu code API
-urlpatterns = []
+urlpatterns = [
+    path('find-route/', FindRouteView.as_view(), name='find-route'),
+]

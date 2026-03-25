@@ -38,8 +38,12 @@ services:
       SECRET_KEY: ${DJANGO_SECRET_KEY}
       DEBUG: ${DJANGO_DEBUG}
       ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      # Bắt Django dùng polling thay vì filesystem events để detect code changes
+      # Cần thiết trên Windows + Docker Desktop (inotify không hoạt động qua volume mount)
+      WATCHFILES_FORCE_POLLING: "true"
     volumes:
       - ./backend:/app
+      - /app/venv                                                        # che venv Windows, dùng packages trong image
       - ./data/tay-ho-datas.geojson:/geojson/tay-ho-datas.geojson:ro
     ports:
       - "8000:8000"
@@ -91,11 +95,13 @@ services:
       VITE_GEOSERVER_URL: ${VITE_GEOSERVER_URL}
       VITE_GEOSERVER_WORKSPACE: ${VITE_GEOSERVER_WORKSPACE}
     volumes:
-      - ./frontend/src:/app/src
+      - ./frontend:/app
+      - /app/node_modules                                                # che node_modules Windows
     ports:
       - "5173:5173"
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     networks:
       - gis-network
 

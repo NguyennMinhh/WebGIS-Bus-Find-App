@@ -4,6 +4,7 @@ import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import Feature from 'ol/Feature'
 import Point from 'ol/geom/Point'
+import CircleGeom from 'ol/geom/Circle'
 import { fromLonLat, toLonLat } from 'ol/proj'
 import { Style, Circle as CircleStyle, Fill, Stroke } from 'ol/style'
 import type { MapBrowserEvent } from 'ol'
@@ -28,15 +29,26 @@ function createMarkerStyle(color: string) {
 const ORIGIN_STYLE = createMarkerStyle('#2563eb')       // xanh
 const DESTINATION_STYLE = createMarkerStyle('#dc2626')  // đỏ
 
+// Style vùng buffer: fill mờ + viền nét đứt, màu khớp với marker
+const ORIGIN_BUFFER_STYLE = new Style({
+  fill: new Fill({ color: 'rgba(37, 99, 235, 0.08)' }),
+  stroke: new Stroke({ color: '#2563eb', width: 1.5, lineDash: [6, 4] }),
+})
+const DESTINATION_BUFFER_STYLE = new Style({
+  fill: new Fill({ color: 'rgba(220, 38, 38, 0.08)' }),
+  stroke: new Stroke({ color: '#dc2626', width: 1.5, lineDash: [6, 4] }),
+})
+
 // Interface data đầu vào
 interface UseRoutePickerParams {
   mapRef: React.MutableRefObject<Map | null>  // useRef<Map | null>(null) từ MapView
   selectionMode: SelectionMode
   setSelectionMode: (mode: SelectionMode) => void
+  radius: number  // bán kính buffer (mét), dùng để vẽ vùng tìm kiếm
 }
 
 // ─── Hook chính ──────────────────────────────────────────────────────────────
-export function useRoutePicker({ mapRef, selectionMode, setSelectionMode }: UseRoutePickerParams) {
+export function useRoutePicker({ mapRef, selectionMode, setSelectionMode, radius }: UseRoutePickerParams) {
 
   // useState → reactive, khi thay đổi sẽ trigger re-render
   const [origin, setOrigin] = useState<LngLat | null>(null)
@@ -45,18 +57,28 @@ export function useRoutePicker({ mapRef, selectionMode, setSelectionMode }: UseR
   // useRef → KHÔNG trigger re-render, dùng để giữ object OL
   // (tương đương shallowRef không reactive trong Vue3)
   const layerRef = useRef<VectorLayer | null>(null)
-  const originFeature = useRef(new Feature())       // Feature OL để vẽ marker
+  const originFeature = useRef(new Feature())             // Feature OL để vẽ marker
   const destinationFeature = useRef(new Feature())
+  const originBufferFeature = useRef(new Feature())       // Feature vẽ vùng buffer
+  const destinationBufferFeature = useRef(new Feature())
 
   // Lazy init: chỉ tạo layer 1 lần khi lần đầu gọi
   function getLayer() {
     if (!layerRef.current) {
       originFeature.current.setStyle(ORIGIN_STYLE)
       destinationFeature.current.setStyle(DESTINATION_STYLE)
+      originBufferFeature.current.setStyle(ORIGIN_BUFFER_STYLE)
+      destinationBufferFeature.current.setStyle(DESTINATION_BUFFER_STYLE)
 
       layerRef.current = new VectorLayer({
         source: new VectorSource({
-          features: [originFeature.current, destinationFeature.current],
+          // Buffer features thêm TRƯỚC marker → vẽ bên dưới, marker hiện nổi lên trên
+          features: [
+            originBufferFeature.current,
+            destinationBufferFeature.current,
+            originFeature.current,
+            destinationFeature.current,
+          ],
         }),
         zIndex: 100,  // nổi trên WMS layers
       })
@@ -85,7 +107,23 @@ export function useRoutePicker({ mapRef, selectionMode, setSelectionMode }: UseR
     return () => { map.removeLayer(layer) }
   }, [mapRef.current])
 
-  // ─── Effect 2: Attach/detach click listener theo selectionMode ─────────────
+  // ─── Effect 2: Vẽ/cập nhật vùng buffer khi tọa độ hoặc bán kính thay đổi ───
+  // CircleGeom(center, radius): center là EPSG:3857, radius tính bằng mét
+  useEffect(() => {
+    if (origin) {
+      originBufferFeature.current.setGeometry(new CircleGeom(fromLonLat(origin), radius))
+    } else {
+      originBufferFeature.current.setGeometry(undefined)
+    }
+
+    if (destination) {
+      destinationBufferFeature.current.setGeometry(new CircleGeom(fromLonLat(destination), radius))
+    } else {
+      destinationBufferFeature.current.setGeometry(undefined)
+    }
+  }, [origin, destination, radius])
+
+  // ─── Effect 3: Attach/detach click listener theo selectionMode ─────────────
   useEffect(() => {
     const map = mapRef.current
     if (!map || !selectionMode) return
@@ -151,6 +189,8 @@ export function useRoutePicker({ mapRef, selectionMode, setSelectionMode }: UseR
     setDestination(null)
     removeMarker(originFeature.current)
     removeMarker(destinationFeature.current)
+    originBufferFeature.current.setGeometry(undefined)
+    destinationBufferFeature.current.setGeometry(undefined)
   }, [])
 
   // API công khai của hook

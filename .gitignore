@@ -51,3 +51,6 @@ data/*.geojson
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# document
+documents

@@ -6,6 +6,9 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',   // expose ra ngoài container Docker
     port: 5173,
+    watch: {
+      usePolling: true, // cần thiết cho Docker trên Windows (filesystem events không được forward)
+    },
     // Proxy API calls đến Django (tránh CORS khi dev)
     proxy: {
       '/api': {

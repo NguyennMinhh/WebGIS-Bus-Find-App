@@ -27,7 +27,7 @@ async function post<TBody, TResponse>(path: string, body: TBody): Promise<TRespo
 
 export const api = {
   get,
-  findRoute(origin: LngLat, destination: LngLat): Promise<FindRouteResult[]> {
-    return post('/api/find-route/', { origin, destination, radius: 500 })
+  findRoute(origin: LngLat, destination: LngLat, radius: number): Promise<FindRouteResult[]> {
+    return post('/find-route/', { origin, destination, radius })
   },
 }

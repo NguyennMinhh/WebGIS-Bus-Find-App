@@ -9,7 +9,10 @@ interface Props {
   selectionMode: SelectionMode
   results: FindRouteResult[]
   loading: boolean
+  error: string | null
+  radius: number
   onSetSelectionMode: (mode: SelectionMode) => void
+  onSetRadius: (r: number) => void
   onSearch: () => void
   onGPS: () => void
   onClear: () => void
@@ -75,7 +78,10 @@ const RouteSearchPanel = ({
   selectionMode,
   results,
   loading,
+  error,
+  radius,
   onSetSelectionMode,
+  onSetRadius,
   onSearch,
   onGPS,
   onClear,
@@ -107,6 +113,21 @@ const RouteSearchPanel = ({
 
       <hr className="my-3" />
 
+      {/* ── Bán kính tìm kiếm ── */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs text-gray-500 shrink-0">Bán kính:</span>
+        <input
+          type="number"
+          min={100}
+          max={2000}
+          step={100}
+          value={radius}
+          onChange={e => onSetRadius(Number(e.target.value))}
+          className="w-20 text-xs border border-gray-300 rounded px-2 py-1 text-center"
+        />
+        <span className="text-xs text-gray-400">m</span>
+      </div>
+
       {/* ── Nút tìm tuyến ── */}
       <div className="flex gap-2">
         <button
@@ -130,6 +151,25 @@ const RouteSearchPanel = ({
         )}
       </div>
 
+      {/* ── Trạng thái sau khi bấm tìm ── */}
+      {loading && (
+        <p className="mt-3 text-xs text-blue-600 text-center animate-pulse">
+          ⏳ Đang tìm tuyến xe buýt phù hợp...
+        </p>
+      )}
+
+      {error && !loading && (
+        <p className="mt-3 text-xs text-red-500 bg-red-50 rounded-lg px-3 py-2">
+          ⚠️ {error}
+        </p>
+      )}
+
+      {!loading && !error && results.length === 0 && origin && destination && (
+        <p className="mt-3 text-xs text-gray-400 text-center">
+          Không tìm thấy tuyến phù hợp. Thử chọn điểm gần trạm xe hơn.
+        </p>
+      )}
+
       {/* ── Danh sách kết quả ── */}
       {results.length > 0 && (
         <div className="mt-3 max-h-60 overflow-y-auto">
@@ -137,9 +177,8 @@ const RouteSearchPanel = ({
             Tìm thấy {results.length} tuyến:
           </p>
 
-          {/* Key bắt buộc để React tracking DOM efficiently */}
-          {results.map(route => (
-            <RouteCard key={route.id} route={route} />
+          {results.map((route, i) => (
+            <RouteCard key={`${route.id}-${i}`} route={route} />
           ))}
         </div>
       )}
@@ -152,26 +191,22 @@ const RouteCard = ({ route }: { route: FindRouteResult }) => (
   <div className="border border-gray-200 rounded-lg p-3 mb-2 hover:bg-gray-50">
     {/* Tuyến số + tên */}
     <p className="font-semibold text-sm">
-      Tuyến {route.ref}
-      {route.name && <span className="font-normal text-gray-600"> — {route.name}</span>}
+      Tuyến {route.ref || 'N/A'}
+      <span className="font-normal text-gray-600"> — {route.name || 'N/A'}</span>
     </p>
 
     {/* Điểm lên/xuống */}
     <p className="text-xs text-gray-500 mt-1">
-      🟢 Lên: <span className="text-gray-700">{route.board_stop.name}</span>
+      🟢 Lên: <span className="text-gray-700">{route.board_stop?.name || 'N/A'}</span>
     </p>
     <p className="text-xs text-gray-500">
-      🔴 Xuống: <span className="text-gray-700">{route.alight_stop.name}</span>
+      🔴 Xuống: <span className="text-gray-700">{route.alight_stop?.name || 'N/A'}</span>
     </p>
 
     {/* Thông tin thêm */}
     <div className="flex gap-3 mt-1">
-      {route.charge && (
-        <span className="text-xs text-green-600">Phí {route.charge}</span>
-      )}
-      {route.interval && (
-        <span className="text-xs text-blue-600">Thời gian {route.interval}</span>
-      )}
+      <span className="text-xs text-green-600">💰 {route.charge || 'N/A'}</span>
+      <span className="text-xs text-blue-600">⏱ {route.interval || 'N/A'}</span>
     </div>
   </div>
 )

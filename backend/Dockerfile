@@ -19,3 +19,13 @@ RUN pip install --no-cache-dir \
     -r requirements.txt
 
 COPY . .
+
+# entrypoint.sh: chạy migrate tự động trước khi start server
+# chmod +x: cấp quyền "executable" cho script (Linux bắt buộc)
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# ENTRYPOINT: lệnh luôn chạy đầu tiên khi container start
+# CMD: tham số mặc định truyền vào ENTRYPOINT (có thể override qua docker-compose)
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
